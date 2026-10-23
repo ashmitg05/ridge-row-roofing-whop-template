@@ -1,5 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { site } from '../site-config'
+import { readWhopIdentity, whopRequest } from './whop-api'
+import { deliverEmail, type EmailResult } from './email'
 
 export type EstimateInput = {
   name: string
@@ -10,6 +12,7 @@ export type EstimateInput = {
   message: string
   website?: string
   accessToken?: string
+  requestId?: string
 }
 
 export const submitEstimate = createServerFn({ method: 'POST' })
@@ -23,28 +26,21 @@ export const submitEstimate = createServerFn({ method: 'POST' })
       service: data.service.trim().slice(0, 60),
       message: data.message.trim().slice(0, 1500),
     }
-    if (data.website) return { ok: true, leadId: '' }
+    if (data.website) return { ok: true, leadId: '', email: { status: 'restricted' } as EmailResult }
     if (!clean.name || !/^\S+@\S+\.\S+$/.test(clean.email) || !clean.phone || !/^\d{5}(?:-\d{4})?$/.test(clean.zip) || !clean.service) {
       throw new Error('Please complete every required field with a valid email and US ZIP code.')
     }
-    if (!data.accessToken) throw new Error('Please sign in with Whop to submit this request.')
-    const userResponse = await fetch('https://api.whop.com/oauth/userinfo', {
-      headers: { Authorization: `Bearer ${data.accessToken}`, 'x-whop-inject-key': 'none' },
-    })
-    if (!userResponse.ok) throw new Error('Whop sign-in expired. Please submit the form again.')
-    const user = await userResponse.json() as { sub?: string }
-    if (!user.sub?.startsWith('user_')) throw new Error('Whop could not identify the signed-in user.')
-    const apiOrigin = process.env.WHOP_API_ORIGIN || 'https://api.whop.com'
-    const localToken = process.env.WHOP_API_KEY
-    const response = await fetch(`${apiOrigin}/api/v1/leads`, {
+    if (!data.accessToken) throw new Error('Please sign in securely to submit this request.')
+    const user = await readWhopIdentity(data.accessToken)
+    const requestId = /^[A-Za-z0-9-]{16,80}$/.test(data.requestId || '') ? data.requestId! : crypto.randomUUID()
+    const lead = await whopRequest<{ id: string }>('/leads', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(localToken ? { Authorization: `Bearer ${localToken}` } : {}) },
-      body: JSON.stringify({ user_id: user.sub, account_id: process.env.WHOP_ACCOUNT_ID || site.accountId, metadata: { ...clean, source: 'roofing_website_estimate', template_demo: true } }),
+      headers: { 'Idempotency-Key': `roofing-lead-${user.sub}-${requestId}` },
+      body: JSON.stringify({ user_id: user.sub, account_id: site.accountId, metadata: { ...clean, source: 'roofing_website_estimate', template_demo: true, request_id: requestId } }),
     })
-    if (!response.ok) {
-      console.error('Whop Leads create failed', response.status)
-      throw new Error('Whop could not save this estimate request. Please try again later.')
-    }
-    const lead = await response.json() as { id: string }
-    return { ok: true, leadId: lead.id }
+    // A successful Lead must remain successful even if the email provider is unavailable.
+    const email: EmailResult = user.email?.toLowerCase() === clean.email
+      ? await deliverEmail({ to: clean.email, subject: `${site.company}: estimate request received`, title: 'We received your estimate request.', paragraphs: [`Hello ${clean.name},`, `Your request for ${clean.service.toLowerCase()} in ZIP ${clean.zip} is saved in estimate requests.`, `Your reference: ${lead.id}.`, 'This is a roofing website template demonstration. No appointment or roofing service has been booked.'], idempotencyKey: `roofing-estimate-${user.sub}-${requestId}` })
+      : { status: 'restricted' }
+    return { ok: true, leadId: lead.id, email }
   })

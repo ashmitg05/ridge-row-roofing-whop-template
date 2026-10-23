@@ -43,6 +43,7 @@ const invoice = await whop.invoices.create({
   product: { title: 'Roofing project final balance' },
   plan: { currency: 'usd', initial_price: balance, plan_type: 'one_time', description: `Final balance for project after $${site.prices.deposit} deposit ${deposit.id}` },
   line_items: [{ label: 'Roofing project balance', unit_price: balance, quantity: 1 }],
+  due_date: new Date(Date.now() + 7 * 86400000).toISOString(),
   save_as_draft: args.execute !== true,
 })
 

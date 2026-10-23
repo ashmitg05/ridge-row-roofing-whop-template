@@ -26,8 +26,8 @@ export const createServicePayment = createServerFn({ method: 'POST' })
       body: JSON.stringify({ account_id: site.accountId, plan_id: site.plans[data.item], confirmation_token: data.confirmationToken, return_url: `${site.baseUrl}/checkout/return?item=${data.item}`, metadata: { template: 'ridge_row_roofing', service: data.item } }),
     })
     if (!response.ok) {
-      console.error('Whop payment create failed', response.status)
-      throw new Error('Whop could not start the charge. Please try another method.')
+      console.error('payment create failed', response.status)
+      throw new Error('The payment provider could not start the charge. Please try another method.')
     }
     const payment = await response.json() as { id: string; status: string; client_secret: string | null }
     return { id: payment.id, status: payment.status, client_secret: payment.client_secret }
@@ -39,7 +39,7 @@ async function getPayment(paymentId: string, item: CheckoutItem): Promise<Paymen
   if (!/^pay_[A-Za-z0-9]+$/.test(paymentId)) return null
   const { origin, authHeaders } = whopApi()
   const response = await fetch(`${origin}/api/v1/payments/${paymentId}`, { headers: authHeaders })
-  if (!response.ok) { console.warn('Whop payment lookup failed', response.status); return null }
+  if (!response.ok) { console.warn('payment lookup failed', response.status); return null }
   const payment = await response.json() as Payment
   const accountId = payment.account_id || payment.company?.id
   const matchesPlan = payment.plan_id === site.plans[item] || payment.plan?.id === site.plans[item] || payment.line_items?.some((line) => line.plan_id === site.plans[item])
@@ -69,7 +69,7 @@ export const createCardSetupIntent = createServerFn({ method: 'POST' })
   .validator((input: { paymentId: string; confirmationToken: string }) => input)
   .handler(async ({ data }) => {
     if (!/^ctok_[A-Za-z0-9]+$/.test(data.confirmationToken) || !(await getPayment(data.paymentId, 'deposit'))) {
-      throw new Error('A confirmed deposit and a valid Whop payment token are required.')
+      throw new Error('A confirmed deposit and a valid payment token are required.')
     }
     const { origin, authHeaders } = whopApi()
     const response = await fetch(`${origin}/api/v1/setup_intents`, {
@@ -78,8 +78,8 @@ export const createCardSetupIntent = createServerFn({ method: 'POST' })
       body: JSON.stringify({ account_id: site.accountId, confirmation_token: data.confirmationToken, currency: 'usd', return_url: `${site.baseUrl}/checkout/return?mode=save&deposit_payment=${data.paymentId}`, metadata: { deposit_payment_id: data.paymentId, template: 'ridge_row_roofing' } }),
     })
     if (!response.ok) {
-      console.error('Whop setup intent create failed', response.status)
-      throw new Error('Whop could not create the setup intent. Please try again.')
+      console.error('payment authorization create failed', response.status)
+      throw new Error('The payment provider could not create the setup intent. Please try again.')
     }
     const setup = await response.json() as { id: string; status: string; client_secret: string | null }
     return { id: setup.id, status: setup.status, client_secret: setup.client_secret }

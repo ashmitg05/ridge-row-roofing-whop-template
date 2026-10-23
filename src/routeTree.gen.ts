@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OperatorRouteImport } from './routes/operator'
 import { Route as CheckoutItemRouteImport } from './routes/checkout.$item'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as OauthCallbackRouteImport } from './routes/oauth/callback'
@@ -17,6 +18,11 @@ import { Route as OauthCallbackRouteImport } from './routes/oauth/callback'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperatorRoute = OperatorRouteImport.update({
+  id: '/operator',
+  path: '/operator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutItemRoute = CheckoutItemRouteImport.update({
@@ -37,12 +43,14 @@ const OauthCallbackRoute = OauthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/operator': typeof OperatorRoute
   '/checkout/$item': typeof CheckoutItemRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/oauth/callback': typeof OauthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/operator': typeof OperatorRoute
   '/checkout/$item': typeof CheckoutItemRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/oauth/callback': typeof OauthCallbackRoute
@@ -50,18 +58,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/operator': typeof OperatorRoute
   '/checkout/$item': typeof CheckoutItemRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/oauth/callback': typeof OauthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/checkout/$item' | '/checkout/return' | '/oauth/callback'
+  fullPaths:
+    | '/'
+    | '/operator'
+    | '/checkout/$item'
+    | '/checkout/return'
+    | '/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/checkout/$item' | '/checkout/return' | '/oauth/callback'
+  to:
+    | '/'
+    | '/operator'
+    | '/checkout/$item'
+    | '/checkout/return'
+    | '/oauth/callback'
   id:
     | '__root__'
     | '/'
+    | '/operator'
     | '/checkout/$item'
     | '/checkout/return'
     | '/oauth/callback'
@@ -69,6 +89,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OperatorRoute: typeof OperatorRoute
   CheckoutItemRoute: typeof CheckoutItemRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   OauthCallbackRoute: typeof OauthCallbackRoute
@@ -81,6 +102,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operator': {
+      id: '/operator'
+      path: '/operator'
+      fullPath: '/operator'
+      preLoaderRoute: typeof OperatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/$item': {
@@ -109,6 +137,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OperatorRoute: OperatorRoute,
   CheckoutItemRoute: CheckoutItemRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   OauthCallbackRoute: OauthCallbackRoute,

@@ -4,7 +4,9 @@ import type { EstimateInput } from './server/estimate'
 const storageKey = 'ridge-row-estimate-oauth'
 const redirectUri = `${site.baseUrl}/oauth/callback`
 
-type Pending = { state: string; verifier: string; estimate: EstimateInput }
+type Pending = { state: string; verifier: string; purpose: 'estimate'; estimate: EstimateInput } | { state: string; verifier: string; purpose: 'operator' }
+
+export const operatorStorageKey = 'ridge-row-operator-session'
 
 function base64url(bytes: Uint8Array) {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
@@ -14,12 +16,12 @@ function randomString(length: number) {
   return base64url(crypto.getRandomValues(new Uint8Array(length)))
 }
 
-export async function startEstimateSignIn(estimate: EstimateInput) {
+async function startSignIn(intent: { purpose: 'estimate'; estimate: EstimateInput } | { purpose: 'operator' }) {
   const verifier = randomString(32)
   const state = randomString(16)
   const nonce = randomString(16)
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
-  sessionStorage.setItem(storageKey, JSON.stringify({ state, verifier, estimate } satisfies Pending))
+  sessionStorage.setItem(storageKey, JSON.stringify({ state, verifier, ...intent } satisfies Pending))
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: site.appId,
@@ -33,10 +35,16 @@ export async function startEstimateSignIn(estimate: EstimateInput) {
   window.location.assign(`https://api.whop.com/oauth/authorize?${params}`)
 }
 
-export async function completeEstimateSignIn(): Promise<{ token: string; estimate: EstimateInput }> {
+export function startEstimateSignIn(estimate: EstimateInput) {
+  return startSignIn({ purpose: 'estimate', estimate: { ...estimate, requestId: crypto.randomUUID() } })
+}
+
+export function startOperatorSignIn() { return startSignIn({ purpose: 'operator' }) }
+
+export async function completeWhopSignIn(): Promise<{ token: string; intent: Pending }> {
   const params = new URLSearchParams(window.location.search)
   const error = params.get('error')
-  if (error) throw new Error('Whop sign-in was cancelled or declined. Please try again.')
+  if (error) throw new Error('Account sign-in was cancelled or declined. Please try again.')
   const code = params.get('code')
   const state = params.get('state')
   const pending = JSON.parse(sessionStorage.getItem(storageKey) || 'null') as Pending | null
@@ -54,8 +62,8 @@ export async function completeEstimateSignIn(): Promise<{ token: string; estimat
       code_verifier: pending.verifier,
     }),
   })
-  if (!response.ok) throw new Error('Whop sign-in could not be completed. Please submit the estimate form again.')
+  if (!response.ok) throw new Error('Account sign-in could not be completed. Please submit the estimate form again.')
   const token = await response.json() as { access_token?: string }
-  if (!token.access_token) throw new Error('Whop did not return a sign-in token.')
-  return { token: token.access_token, estimate: pending.estimate }
+  if (!token.access_token) throw new Error('The payment provider did not return a sign-in token.')
+  return { token: token.access_token, intent: pending }
 }

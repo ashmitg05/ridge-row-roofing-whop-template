@@ -2,7 +2,7 @@
 
 Live demo: https://ridge-row-roofing-demo.whop.site
 
-Original, responsive roofing site for Whop Websites. The brand and testimonials are fictional and labeled as samples. It includes repair, replacement, inspection, service area, financing context, pricing, trust, and an estimate form.
+Original, responsive roofing site for Whop Websites. Ridge & Row is fictional; the reviews section is an explicit placeholder, not a fabricated testimonial. It includes repair, replacement, inspection, service area, financing context, pricing, trust, and an estimate form.
 
 ## What works
 
@@ -29,7 +29,7 @@ To deploy, authenticate the Whop CLI, initialize a new Website app with `whop ap
 ## Adapt for a real contractor
 
 1. Change company name, prices, plan IDs, service area, business ID, and `baseUrl` in `src/site-config.ts`.
-2. Replace sample imagery, review, copy, and contact details with verified business material.
+2. Replace sample imagery, the proof placeholder, copy, and contact details with verified business material.
 3. Create your own Whop Website app and set `site.appId` to its app ID.
 4. Register the app's `/oauth/callback` URL in Whop. It is derived from `site.baseUrl`. Enable the `openid`, `profile`, and `email` OAuth scopes.
 5. Create three one-time plans in the new Whop business and replace the sample plan IDs and checkout URLs. Whop returns each plan's canonical `purchase_url` through its Plans API or dashboard.
@@ -37,6 +37,16 @@ To deploy, authenticate the Whop CLI, initialize a new Website app with `whop ap
 
 ## Verification limits
 
-The embedded checkout and saved-method form are real Whop Elements. Whop's docs say Elements sandbox is not generally available, so this repository does **not** claim a completed sandbox checkout or saved test card. Wallets and financing show only when Whop offers them to that buyer. No real payment or final invoice has been created for the fictional demo business. A 3–5 minute submission recording with a completed sandbox payment and invoice cannot honestly be produced until Whop enables a compatible test flow and a consenting test buyer completes it.
+The embedded checkout and saved-method form are real Whop Elements. Whop's docs say Elements sandbox is not generally available, so this repository does **not** claim a completed sandbox checkout or saved test card. Wallets and financing show only when Whop offers them to that buyer. A manual demo invoice was created and emailed; it remains open, and no payment was made. No stored-card payment occurred. The requested successful sandbox checkout and complete submission recording remain unverified.
 
 The source lives in `src/`; design assets are in `public/images/`. `src/server/estimate.ts` is the server-side Lead creation handler. No API key is committed. The Whop OAuth access token is held only for the submission, and the sign-in state is stored temporarily in session storage.
+
+## Private operator workspace and email
+
+Open `/operator` and sign in with an allowlisted Whop user. Server-side checks protect every data request and invoice action. Configure encrypted Whop secrets `WHOP_OPERATOR_USER_IDS` (comma-separated user IDs), `RESEND_API_KEY`, `EMAIL_FROM`, and `EMAIL_TEST_RECIPIENT`. Never put credentials in client code.
+
+The workspace lists real account Leads, manual invoices, recent payment results, and tracked events. A manual final-balance invoice can be created independently of a paid deposit. It uses `send_invoice`, a due date seven days ahead, and does not charge a stored card. Demonstration invoices are restricted to the configured test inbox and clearly state that no actual debt exists.
+
+Estimate confirmations require the submitted email to match the authenticated Whop identity. Email failures do not erase saved Leads or created invoices. Resend acceptance is distinguished from actual delivery. The default Resend test sender only supports the account owner's inbox; verify a sending domain before using real customer addresses.
+
+`npm test` checks monetary validation, recipient restrictions, escaping, link safety, email failure/idempotency handling, and operator authorization boundaries.

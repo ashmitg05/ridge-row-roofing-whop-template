@@ -51,7 +51,7 @@ p { line-height: 1.65; }
 .service-copy p, .picker-result p, .price-list p { color: #414943; }
 .service img { transition: transform .55s cubic-bezier(.2,.7,.2,1); }
 .service:hover img { transform: scale(1.045); }
-.service-picker { border-top-color: #aaa99f; }
+.service-picker { border-top: 0; }
 .picker-tabs button { font-size: .88rem; border-color: #737b73; }
 .picker-tabs button:hover:not(.active) { background: #d7ded9; }
 .picker-tabs button.active { background: #202a29; border-color: #202a29; }
@@ -87,6 +87,13 @@ p { line-height: 1.65; }
 .hero-copy > :nth-child(3) { animation-delay: .17s; }
 .hero-copy > :nth-child(4) { animation-delay: .25s; }
 .hero-image { animation: enter-rise .85s .2s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes roof-settle { from { transform: scale(1.035); } to { transform: scale(1); } }
+.hero-image img { animation: roof-settle 1.1s .2s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes section-arrive { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+html.motion-ready main > section:not(.hero):not(.motion-visible) > * { opacity: 0; transform: translateY(16px); }
+html.motion-ready main > section.motion-visible:not(.hero) > * { animation: section-arrive .55s cubic-bezier(.2,.7,.2,1) both; }
+html.motion-ready main > section.motion-visible:not(.hero) > :nth-child(2) { animation-delay: .07s; }
+html.motion-ready main > section.motion-visible:not(.hero) > :nth-child(3) { animation-delay: .14s; }
 
 @media (max-width: 1100px) {
   .site-header .header-cta { order: 2; margin-left: auto; }
@@ -146,6 +153,79 @@ p { line-height: 1.65; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-copy > *, .hero-image { animation: none; }
-  .menu-icon i { transition: none; }
+  .hero-copy > *, .hero-image, .hero-image img,
+  html.motion-ready main > section.motion-visible:not(.hero) > * { animation: none; }
+  .menu-icon i, .service img, .button { transition: none; }
+}
+
+/* A consistent cut echos the slope of a roof across photographs and section edges. */
+.demo-strip { min-height: 40px; display: grid; place-items: center; padding: 8px 20px; font-size: .875rem; font-weight: 500; letter-spacing: 0; }
+.demo-strip span { padding-inline: 0; }
+.hero-copy .micro, .section-intro .micro, .service-picker .micro, .process .micro,
+.pricing .micro, .finance-band .micro, .trust .micro, .area .micro, .estimate .micro { display: none; }
+.hero h1 { white-space: normal; line-height: .91; }
+.hero h1 .hero-title-accent { color: #f0c76f; }
+.hero-image img, .service-grid .service-img { clip-path: polygon(0 0, 100% 0, 100% 91%, 92% 100%, 0 100%); }
+.hero-foot { font-size: .875rem; letter-spacing: 0; color: #e0e4dc; }
+.section-intro { grid-template-columns: 1.55fr .8fr; gap: clamp(28px, 5vw, 72px); align-items: end; margin-bottom: 54px; }
+.section-intro h2 { max-width: 740px; }
+.section-intro > p:last-child { padding: 0 0 4px; }
+
+/* One featured service and two compact choices make the grid feel authored. */
+.service-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); grid-template-rows: repeat(2, minmax(240px, auto)); gap: 34px clamp(28px, 4vw, 60px); align-items: stretch; }
+.service-grid .service { min-width: 0; margin: 0; }
+.service-grid .repair { grid-column: 1; grid-row: 1 / 3; display: flex; flex-direction: column; }
+.service-grid .replacement, .service-grid .inspection { grid-column: 2; display: grid; grid-template-columns: minmax(150px, .82fr) minmax(0, 1fr); align-items: center; gap: clamp(18px, 2.2vw, 32px); }
+.service-grid .replacement { grid-row: 1; }
+.service-grid .inspection { grid-row: 2; }
+.service-grid .service-img { width: 100%; height: auto; min-width: 0; aspect-ratio: 4 / 3; overflow: hidden; }
+.service-grid .repair .service-img { aspect-ratio: 1 / 1.05; }
+.service-grid .replacement .service-img, .service-grid .inspection .service-img { aspect-ratio: 1 / 1; }
+.service-grid .service-img img { width: 100%; height: 100%; object-fit: cover; }
+.service-grid .service-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; padding-top: 22px; }
+.service-grid .replacement .service-copy, .service-grid .inspection .service-copy { padding-top: 0; }
+.service-grid .service-copy h3 { font-size: clamp(1.8rem, 2.5vw, 2.5rem); line-height: 1.08; }
+.service-grid .service-copy p { max-width: none; margin: 12px 0 18px; }
+.service-grid .inline-action { margin-top: auto; min-height: 44px; display: inline-flex; align-items: center; text-align: left; line-height: 1.4; }
+
+/* Native accessible buttons use the compact segmented-control rhythm common in 21st.dev tabs. */
+.picker-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.picker-tabs button { min-width: 0; min-height: 52px; padding-inline: 10px; border: 1px solid #737b73; border-radius: 3px; line-height: 1.25; }
+.picker-tabs button.active { box-shadow: inset 0 -3px 0 #d7ad58; }
+.picker-result { min-height: 150px; }
+
+.process-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; counter-reset: none; }
+.process-steps li { padding: 24px 0; border-top: 1px solid #56615b; }
+.process-steps li:first-child { padding-top: 0; border-top: 0; }
+.process-steps h3 { font-size: clamp(1.7rem, 2.4vw, 2.15rem); }
+.process-steps p { max-width: 54ch; margin-top: 9px; }
+.trust-card { border-left: 4px solid #d7ad58; }
+.trust-card h3 { max-width: 14ch; font-size: clamp(1.9rem, 3vw, 2.8rem); line-height: 1.06; }
+.trust-card p { max-width: 44ch; margin-top: 20px; color: #d3d9d0; }
+
+@media (max-width: 959px) {
+  .service-grid { grid-template-columns: 1fr; grid-template-rows: auto; gap: 42px; }
+  .service-grid .repair, .service-grid .replacement, .service-grid .inspection { grid-column: 1; grid-row: auto; }
+  .service-grid .repair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  .service-grid .repair .service-img { aspect-ratio: 4 / 3; }
+  .service-grid .replacement, .service-grid .inspection { grid-template-columns: 1fr 1fr; gap: 28px; }
+  .service-grid .replacement .service-img, .service-grid .inspection .service-img { aspect-ratio: 4 / 3; }
+  .service-grid .service-copy, .service-grid .replacement .service-copy, .service-grid .inspection .service-copy { padding-top: 0; }
+}
+@media (max-width: 600px) {
+  .demo-strip { text-align: center; font-size: .8rem; }
+  .hero h1 { font-size: clamp(3.35rem, 13.5vw, 4.5rem); line-height: .94; }
+  .hero h1 .hero-title-accent { padding-left: 0; }
+  .hero-foot { display: grid; gap: 5px; line-height: 1.4; }
+  .section-intro { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 38px; }
+  .section-intro > p:last-child { max-width: 42ch; }
+  .service-grid { gap: 38px; }
+  .service-grid .repair, .service-grid .replacement, .service-grid .inspection { display: flex; flex-direction: column; gap: 0; }
+  .service-grid .service-img, .service-grid .repair .service-img,
+  .service-grid .replacement .service-img, .service-grid .inspection .service-img { width: 100%; aspect-ratio: 4 / 3; }
+  .service-grid .service-copy, .service-grid .replacement .service-copy, .service-grid .inspection .service-copy { padding-top: 18px; }
+  .picker-tabs { grid-template-columns: 1fr; }
+  .picker-tabs button { text-align: left; padding-inline: 16px; }
+  .process-steps { gap: 0; }
+  .process-steps li { padding-block: 22px; }
 }

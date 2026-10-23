@@ -13,7 +13,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       { title: 'Ridge & Row | Roofing template demo' },
-      { name: 'description', content: 'An original roofing website template on Whop Websites with inspection, repair, replacement, live Whop checkout links, and estimate requests.' },
+      { name: 'description', content: 'An original roofing website template for roofing businesses with inspection, repair, replacement, live checkout links, and estimate requests.' },
     ],
     links: [
       {
